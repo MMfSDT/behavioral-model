@@ -20,6 +20,8 @@
 
 #include <bm/bm_sim/actions.h>
 #include <bm/bm_sim/core/primitives.h>
+#include <cstdlib>
+#include <ctime>
 
 template <typename... Args>
 using ActionPrimitive = bm::ActionPrimitive<Args...>;
@@ -51,3 +53,24 @@ class drop : public ActionPrimitive<> {
 };
 
 REGISTER_PRIMITIVE(drop);
+
+class modify_field_rng_uniform : public ActionPrimitive<Field &, const Data &, const Data &> {
+	bool seeded = false;
+
+	void seed()
+	{
+		srand(time(0));
+		seeded = true;
+	}
+	void operator()(Field &f, const Data &a, const Data &b) {
+		if(!seeded)
+			seed();
+		int na = a.get_int();
+		int nb = b.get_int();
+		int v = rand()%(nb-na+1)+na;
+		Data d(v);
+		bm::core::assign()(f,d);
+	}
+};
+
+REGISTER_PRIMITIVE(modify_field_rng_uniform);
