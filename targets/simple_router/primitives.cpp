@@ -55,20 +55,27 @@ class drop : public ActionPrimitive<> {
 REGISTER_PRIMITIVE(drop);
 
 class modify_field_rng_uniform : public ActionPrimitive<Field &, const Data &, const Data &> {
+	unsigned int g_seed = -1;
 	bool seeded = false;
 
-	void seed()
-	{
-		srand(time(0));
-		seeded = true;
+	// Used to seed the generator.
+	inline void fast_srand(int seed) {
+	    g_seed = seed;
+	    seeded = true;
 	}
+
+	// Compute a pseudorandom integer.
+	// Output value in range [0, 32767]
+	inline int fast_rand(int bits) {
+	    g_seed = (214013*g_seed+2531011);
+	    return (g_seed>>16)&bits;
+	}
+
+
 	void operator()(Field &f, const Data &a, const Data &b) {
 		if(!seeded)
-			seed();
-		int na = a.get_int();
-		int nb = b.get_int();
-		int v = rand()%(nb-na+1)+na;
-		Data d(v);
+			fast_srand(time(0));
+		Data d(fast_rand(b.get_int()));
 		bm::core::assign()(f,d);
 	}
 };
